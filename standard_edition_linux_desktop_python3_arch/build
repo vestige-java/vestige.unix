@@ -1,0 +1,20 @@
+#!/bin/bash
+
+VESTIGE_ARCH_VERSION=$(cat src/PKGBUILD | grep "pkgver=" | sed 's/pkgver=[ \t]*//g')
+
+rm -r target
+mkdir -p target/vestige_arch/usr/bin
+mkdir -p target/vestige_arch/usr/share/icons
+mkdir -p target/vestige_arch/usr/share/applications
+cp src/vestige.install target/
+chmod +x target/vestige.install
+cp ../standard_edition_linux_desktop/src/vestige.desktop target/vestige_arch/usr/share/applications/
+cp ../standard_edition_linux_desktop/src/vestige_python3_launcher.py target/vestige_arch/usr/bin/vestige
+cp -r ../standard_edition_linux_desktop/src/hicolor target/vestige_arch/usr/share/icons/
+chmod +x target/vestige_arch/usr/bin/*
+cp src/PKGBUILD target/PKGBUILD
+find target \( -name .svn -o -name .DS_Store \) -exec rm -rf {} \;
+ssh archbuilder rm -rf '~/target'
+scp -r target archbuilder:.
+ssh archbuilder 'cd target && makepkg -s --sign'
+scp archbuilder:target/vestige-desktop-python3-${VESTIGE_ARCH_VERSION}-1-any.pkg.tar.xz* target/ 

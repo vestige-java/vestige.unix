@@ -1,4 +1,4 @@
-Name:           vestige-desktop
+Name:           vestige-desktop-python2
 Version:        1.0.0
 Release:        1
 Summary:        Java Application Manager
@@ -6,11 +6,13 @@ Summary:        Java Application Manager
 License:        GPLv3+
 URL:            http://gaellalire.fr/vestige/
 
-Source0:        vestige-desktop.tar.gz
+Source0:        vestige-desktop-python2.tar.gz
 
 BuildArchitectures: noarch
 
-Requires:  vestige pygtk2 >= 2.6.0 python-nss python-appindicator python-dbus
+Conflicts: vestige-desktop-python3
+
+Requires:  vestige >= 8.0.0 pygtk2 >= 2.6.0 python2-nss python2-appindicator python2-dbus
 
 %define __jar_repack %{nil}
 
@@ -33,7 +35,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %{_datadir}/applications/vestige.desktop
-%{_datadir}/vestige
 %{_datadir}/icons/hicolor/16x16/apps/vestige.png
 %{_datadir}/icons/hicolor/192x192/apps/vestige.png
 %{_datadir}/icons/hicolor/22x22/apps/vestige.png
@@ -51,7 +52,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/icons/hicolor/256x256/apps/vestige.png
 %{_datadir}/icons/hicolor/scalable/apps/vestige.svg
 %{_bindir}/vestige
-%{_sysconfdir}/vestige
 
 
 %doc

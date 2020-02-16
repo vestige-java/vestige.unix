@@ -1,5 +1,5 @@
-Source: vestige-desktop
-Package: vestige-desktop
+Source: vestige-desktop-python3
+Package: vestige-desktop-python3
 Version: 1.0.0
 Architecture: all
 Section: java
@@ -8,4 +8,5 @@ Maintainer: Gael Lalire <vestige@gaellalire.fr>
 Description: Java Application Manager
 Homepage: http://gaellalire.fr/vestige
 Installed-Size: 15360
-Depends: vestige, python-gtk2 (>= 2.6), python-nss, python-appindicator, python-dbus
+Depends: vestige (>= 8.0.0), python3-nss, gir1.2-appindicator3-0.1, python3-dbus
+Conflicts: vestige-desktop-python2

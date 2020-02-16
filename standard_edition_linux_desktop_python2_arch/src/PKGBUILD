@@ -1,5 +1,5 @@
 # Maintainer: Gael Lalire <vestige@gaellalire.fr>
-pkgname=vestige-desktop
+pkgname=vestige-desktop-python2
 pkgver=1.0.0
 pkgrel=1
 epoch=
@@ -8,12 +8,12 @@ arch=('any')
 url="http://gaellalire.fr/vestige"
 license=('GPL3')
 groups=()
-depends=(vestige 'pygtk>=2.6' python2-dbus python2-nss python2-libappindicator)
+depends=('vestige>=8.0.0' 'pygtk>=2.6' python2-dbus python2-nss python2-libappindicator)
 makedepends=()
 checkdepends=()
 optdepends=()
 provides=()
-conflicts=()
+conflicts=(vestige-desktop-python3)
 replaces=()
 backup=()
 options=()

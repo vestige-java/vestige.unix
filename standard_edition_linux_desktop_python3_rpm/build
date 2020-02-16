@@ -1,0 +1,20 @@
+#!/bin/bash
+
+VESTIGE_RPM_VERSION=$(cat src/vestige-desktop-python3.spec | grep "Version:" | sed 's/Version:[ \t]*//g')
+
+rm -r target
+mkdir -p target/vestige-desktop-python3-$VESTIGE_RPM_VERSION
+cp src/Makefile target/vestige-desktop-python3-$VESTIGE_RPM_VERSION/
+cp src/vestige-desktop-python3.spec target/
+cp -r ../standard_edition_linux_desktop/src/hicolor target/vestige-desktop-python3-$VESTIGE_RPM_VERSION/
+cp ../standard_edition_linux_desktop/src/vestige_python3_launcher.py target/vestige-desktop-python3-$VESTIGE_RPM_VERSION/vestige
+chmod +x target/vestige-desktop-python3-$VESTIGE_RPM_VERSION/vestige
+cp ../standard_edition_linux_desktop/src/vestige.desktop target/vestige-desktop-python3-$VESTIGE_RPM_VERSION/
+find target \( -name .svn -o -name .DS_Store \) -exec rm -rf {} \;
+pushd target && tar -czf vestige-desktop-python3.tar.gz vestige-desktop-python3-$VESTIGE_RPM_VERSION && popd
+scp target/vestige-desktop-python3.tar.gz rpmbuilder:rpmbuild/SOURCES/vestige-desktop-python3.tar.gz
+scp target/vestige-desktop-python3.spec rpmbuilder:rpmbuild/SPECS/vestige-desktop-python3.spec
+ssh rpmbuilder rpmbuild -bb '~/rpmbuild/SPECS/vestige-desktop-python3.spec'
+ssh rpmbuilder 'echo "" | setsid rpm --addsign rpmbuild/RPMS/noarch/vestige-desktop-python3-'$VESTIGE_RPM_VERSION'-1.noarch.rpm'
+scp rpmbuilder:rpmbuild/RPMS/noarch/vestige-desktop-python3-$VESTIGE_RPM_VERSION-1.noarch.rpm target/vestige-desktop-python3-$VESTIGE_RPM_VERSION-1.noarch.rpm
+

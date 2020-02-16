@@ -13,6 +13,7 @@ import subprocess
 import socket
 import time
 import struct
+import fcntl
 from nss.error import NSPRError
 import nss.error as nss_error
 import nss.io as io
@@ -20,9 +21,12 @@ import nss.nss as nss
 import nss.ssl as ssl
 
 
-def addCA(path):
-    db_name = "sql:" + os.getenv("HOME") + "/.pki/nssdb"
-    nss.nss_init_read_write(db_name)
+def addCA(path, db_name):
+    try:
+        nss.nss_init_read_write(db_name)
+    except NSPRError as e:
+        return
+
     certdb = nss.get_default_certdb()
     slot = nss.get_internal_key_slot()
 
@@ -47,9 +51,11 @@ def addCA(path):
 
     nss.nss_shutdown()
 
-def addP12(path):
-    db_name = "sql:" + os.getenv("HOME") + "/.pki/nssdb"
-    nss.nss_init_read_write(db_name)
+def addP12(path, db_name):
+    try:
+        nss.nss_init_read_write(db_name)
+    except NSPRError as e:
+        return
     certdb = nss.get_default_certdb()
     slot = nss.get_internal_key_slot()
 
@@ -86,7 +92,7 @@ class Vestige(dbus.service.Object):
         self.consoleWinShown = False
         self.quit = False
         self.forceStop = False
-        self.autostartPath = os.getenv("HOME") + "/.config/autostart/vestige.desktop"
+        self.autostartPath = os.getenv("XDG_CONFIG_HOME", os.getenv("HOME") + "/.config") + "/autostart/vestige.desktop" 
         
         self.buffer = ""
         self.bufferRemain = 0
@@ -134,7 +140,7 @@ class Vestige(dbus.service.Object):
         self.menu.append(self.adminItem)
         self.adminItem.set_sensitive(False)
 
-        self.folderItem = gtk.MenuItem("Open base folder")
+        self.folderItem = gtk.MenuItem("Open config folder")
         self.folderItem.connect("activate", lambda e : self.openFolder())
         self.menu.append(self.folderItem)
         self.folderItem.set_sensitive(False)
@@ -150,6 +156,9 @@ class Vestige(dbus.service.Object):
         procenv["VESTIGE_CONSOLE_ENCODING"] = "UTF-8"
         try:
             self.proc = subprocess.Popen("/usr/share/vestige/vestige", env=procenv, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            fcntl.fcntl(self.proc.stdout, fcntl.F_SETFL, fcntl.fcntl(self.proc.stdout, fcntl.F_GETFL, 0) | os.O_NONBLOCK)
+            fcntl.fcntl(self.proc.stderr, fcntl.F_SETFL, fcntl.fcntl(self.proc.stderr, fcntl.F_GETFL, 0) | os.O_NONBLOCK)
+            
             gobject.io_add_watch(self.proc.stdout, gobject.IO_IN, self.write_to_buffer)
             gobject.io_add_watch(self.proc.stderr, gobject.IO_IN, self.write_to_buffer)
             gobject.child_watch_add(self.proc.pid, lambda pid, condition: self.processQuit())
@@ -255,8 +264,9 @@ class Vestige(dbus.service.Object):
 
     def listener(self, sock, arg):
         conn, addr = sock.accept()
+        sock.close()
         gobject.io_add_watch(conn, gobject.IO_IN, self.handler)
-        return True
+        return False
 
     def handler(self, conn, args):
         if self.bufferSizeBytes != 4:
@@ -290,8 +300,8 @@ class Vestige(dbus.service.Object):
         if line.startswith("Web "):
             self.url = line[len("Web "):]
             self.adminItem.set_sensitive(True)
-        elif line.startswith("Base "):
-            self.baseFolder = line[len("Base "):]
+        elif line.startswith("Config "):
+            self.baseFolder = line[len("Config "):]
             self.folderItem.set_sensitive(True)
         elif line == "Starting":
             self.procState = 1
@@ -302,15 +312,33 @@ class Vestige(dbus.service.Object):
         elif line == "Stopped":
             self.procState = 4
         elif line.startswith("CA "):
-            addCA(line[len("CA "):])
-        elif line.startswith("ClientP12 "):
-            addP12(line[len("ClientP12 "):]);
+            for firefoxdir in [os.getenv("HOME") + "/.mozilla/firefox", os.getenv("XDG_DATA_HOME", os.getenv("HOME") + "/.local/share") + "/mozilla/firefox"]:
+                if os.path.isdir(firefoxdir):
+                    files = os.listdir(firefoxdir)
+                    for name in files:
+                        sqldb = firefoxdir + "/" + name
+                        if os.path.isfile(sqldb + "/cert9.db"):
+                            addCA(line[len("CA "):], "sql:" + sqldb)
 
+            for nssdir in ["sql:" + os.getenv("HOME") + "/.pki/nssdb", "sql:" + os.getenv("HOME") + "/snap/chromium/current/.pki/nssdb"]:
+                addCA(line[len("CA "):], nssdir)
+        elif line.startswith("ClientP12 "):
+            for firefoxdir in [os.getenv("HOME") + "/.mozilla/firefox", os.getenv("XDG_DATA_HOME", os.getenv("HOME") + "/.local/share") + "/mozilla/firefox"]:
+                if os.path.isdir(firefoxdir):
+                    files = os.listdir(firefoxdir)
+                    for name in files:
+                        sqldb = firefoxdir + "/" + name
+                        if os.path.isfile(sqldb + "/cert9.db"):
+                            addP12(line[len("ClientP12 "):], "sql:" + sqldb);
+
+            for nssdir in ["sql:" + os.getenv("HOME") + "/.pki/nssdb", "sql:" + os.getenv("HOME") + "/snap/chromium/current/.pki/nssdb"]:
+                addP12(line[len("ClientP12 "):], nssdir)
         return True
 
     def write_to_buffer(self, fd, condition):
         if condition == gobject.IO_IN:
-            self.consoleBuffer += fd.read(1)
+            r = fd.read(1024)
+            self.consoleBuffer += r
 
             decoded, self.consoleBuffer = decodeBytesUtf8Safe(self.consoleBuffer)
             buf = self.console.get_buffer()

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+VESTIGE_VERSION=$(cat src/control | grep "Version:" | sed 's/Version:[ \t]*//g')
+
+rm -r target
+mkdir -p target/vestige_deb/DEBIAN
+mkdir -p target/vestige_deb/usr/bin
+mkdir -p target/vestige_deb/usr/share/icons
+mkdir -p target/vestige_deb/usr/share/applications
+mkdir -p target/vestige_deb/usr/share/doc/vestige-desktop-python2
+cp src/control target/vestige_deb/DEBIAN/control
+cp src/copyright target/vestige_deb/usr/share/doc/vestige-desktop-python2/copyright
+cp src/postinst target/vestige_deb/DEBIAN/
+chmod +x target/vestige_deb/DEBIAN/postinst
+cp ../standard_edition_linux_desktop/src/vestige.desktop target/vestige_deb/usr/share/applications/
+cp ../standard_edition_linux_desktop/src/vestige_python2_launcher.py target/vestige_deb/usr/bin/vestige
+cp -r ../standard_edition_linux_desktop/src/hicolor target/vestige_deb/usr/share/icons/
+chmod +x target/vestige_deb/usr/bin/*
+find target \( -name .svn -o -name .DS_Store \) -exec rm -rf {} \;
+ssh debbuilder rm -rf '~/target'
+scp -r target debbuilder:.
+ssh debbuilder dpkg-deb --no-uniform-compression -b target/vestige_deb/ target/vestige-desktop-python2_${VESTIGE_VERSION}_all.deb
+ssh debbuilder debsigs --sign=origin target/vestige-desktop-python2_${VESTIGE_VERSION}_all.deb
+scp debbuilder:target/vestige-desktop-python2_${VESTIGE_VERSION}_all.deb target/vestige-desktop-python2_${VESTIGE_VERSION}_all.deb 

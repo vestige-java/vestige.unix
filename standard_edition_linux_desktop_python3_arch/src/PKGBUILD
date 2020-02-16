@@ -1,0 +1,43 @@
+# Maintainer: Gael Lalire <vestige@gaellalire.fr>
+pkgname=vestige-desktop-python3
+pkgver=1.0.0
+pkgrel=1
+epoch=
+pkgdesc="Java Application Manager"
+arch=('any')
+url="http://gaellalire.fr/vestige"
+license=('GPL3')
+groups=()
+depends=('vestige>=8.0.0' python-dbus python-nss libappindicator-gtk3)
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=(vestige-desktop-python2)
+replaces=()
+backup=()
+options=()
+install=vestige.install
+changelog=
+source=()
+noextract=()
+md5sums=()
+validpgpkeys=()
+
+prepare() {
+	echo $PWD
+	cp -R "../vestige_arch" "$pkgname-$pkgver" 
+}
+
+build() {
+	cd "$pkgname-$pkgver"
+}
+
+check() {
+	cd "$pkgname-$pkgver"
+}
+
+package() {
+	cd "$pkgname-$pkgver"
+	cp -R . "$pkgdir/"
+}
