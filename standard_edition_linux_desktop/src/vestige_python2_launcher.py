@@ -7,6 +7,7 @@ import gobject
 import gtk
 import gtk.gdk
 import os
+import sys
 import signal
 import gobject
 import subprocess
@@ -14,60 +15,69 @@ import socket
 import time
 import struct
 import fcntl
-from nss.error import NSPRError
-import nss.error as nss_error
-import nss.io as io
-import nss.nss as nss
-import nss.ssl as ssl
 
 
 def addCA(path, db_name):
-    try:
-        nss.nss_init_read_write(db_name)
-    except NSPRError as e:
+    child_pid = os.fork()
+    if child_pid != 0:
+        os.waitpid(child_pid, 0)
         return
 
-    certdb = nss.get_default_certdb()
-    slot = nss.get_internal_key_slot()
-
-    cert = None
     try:
-        si = nss.read_der_from_file(path, True)
-        cert = nss.Certificate(si, certdb, True, None)
-    except NSPRError as e:
-        if e.error_code == nss_error.SEC_ERROR_INVALID_ARGS:
-            # try pem
-            try:
+        from nss.error import NSPRError
+        import nss.error as nss_error
+        import nss.nss as nss
+    
+        nss.nss_init_read_write(db_name)
+    
+        certdb = nss.get_default_certdb()
+        slot = nss.get_internal_key_slot()
+
+        cert = None
+        try:
+            si = nss.read_der_from_file(path, True)
+            cert = nss.Certificate(si, certdb, True, None)
+        except NSPRError as e:
+            if e.error_code == nss_error.SEC_ERROR_INVALID_ARGS:
+                # try pem
                 si = nss.read_der_from_file(path, False)
                 cert = nss.Certificate(si, certdb, True, None)
-            except NSPRError:
-                pass
 
-    if cert is not None:
-        cert.set_trust_attributes("CT,C,C", certdb, slot)
+        if cert is not None:
+            cert.set_trust_attributes("CT,C,C", certdb, slot)
 
-    del cert
-    del slot
+        del cert
+        del slot
 
-    nss.nss_shutdown()
+        nss.nss_shutdown()
+    finally:
+        sys.exit(0)
 
 def addP12(path, db_name):
-    try:
-        nss.nss_init_read_write(db_name)
-    except NSPRError as e:
+    child_pid = os.fork()
+    if child_pid != 0:
+        os.waitpid(child_pid, 0)
         return
-    certdb = nss.get_default_certdb()
-    slot = nss.get_internal_key_slot()
 
-    nss.pkcs12_enable_all_ciphers()
-    pkcs12 = nss.PKCS12Decoder(path, "changeit", slot)
-    pkcs12.database_import()
+    try:
+        from nss.error import NSPRError
+        import nss.error as nss_error
+        import nss.nss as nss
 
-    del pkcs12
-    del slot
+        nss.nss_init_read_write(db_name)
+        certdb = nss.get_default_certdb()
+        slot = nss.get_internal_key_slot()
 
-    nss.nss_shutdown()
+        nss.pkcs12_enable_all_ciphers()
+        pkcs12 = nss.PKCS12Decoder(path, "changeit", slot)
+        pkcs12.database_import()
 
+        del pkcs12
+        del slot
+
+        nss.nss_shutdown()
+    finally:
+        sys.exit(0)
 
 def decodeBytesUtf8Safe(toDec):
     okLen = len(toDec)
