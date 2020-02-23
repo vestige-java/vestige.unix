@@ -9,7 +9,6 @@ import dbus.mainloop.glib
 from gi.repository import Gtk
 from gi.repository import Gdk
 import os
-import sys
 import signal
 from gi.repository import GObject
 from gi.repository import GLib
@@ -55,7 +54,7 @@ def addCA(path, db_name):
 
         nss.nss_shutdown()
     finally:
-        sys.exit(0)
+        os._exit(0)
 
 def addP12(path, db_name):
     child_pid = os.fork()
@@ -81,7 +80,7 @@ def addP12(path, db_name):
 
         nss.nss_shutdown()
     finally:
-        sys.exit(0)
+        os._exit(0)
 
 def decodeBytesUtf8Safe(toDec):
     okLen = len(toDec)

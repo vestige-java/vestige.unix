@@ -7,7 +7,6 @@ import gobject
 import gtk
 import gtk.gdk
 import os
-import sys
 import signal
 import gobject
 import subprocess
@@ -51,7 +50,7 @@ def addCA(path, db_name):
 
         nss.nss_shutdown()
     finally:
-        sys.exit(0)
+        os._exit(0)
 
 def addP12(path, db_name):
     child_pid = os.fork()
@@ -77,7 +76,7 @@ def addP12(path, db_name):
 
         nss.nss_shutdown()
     finally:
-        sys.exit(0)
+        os._exit(0)
 
 def decodeBytesUtf8Safe(toDec):
     okLen = len(toDec)
