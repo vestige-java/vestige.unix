@@ -15,6 +15,6 @@ pushd target && tar -czf vestige-desktop-python3.tar.gz vestige-desktop-python3-
 scp target/vestige-desktop-python3.tar.gz rpmbuilder:rpmbuild/SOURCES/vestige-desktop-python3.tar.gz
 scp target/vestige-desktop-python3.spec rpmbuilder:rpmbuild/SPECS/vestige-desktop-python3.spec
 ssh rpmbuilder rpmbuild -bb '~/rpmbuild/SPECS/vestige-desktop-python3.spec'
-ssh rpmbuilder 'echo "" | setsid rpm --addsign rpmbuild/RPMS/noarch/vestige-desktop-python3-'$VESTIGE_RPM_VERSION'-1.noarch.rpm'
+ssh rpmbuilder 'echo "" | setsid rpm --define "_gpg_name '$GPG_NAME'" --addsign rpmbuild/RPMS/noarch/vestige-desktop-python3-'$VESTIGE_RPM_VERSION'-1.noarch.rpm'
 scp rpmbuilder:rpmbuild/RPMS/noarch/vestige-desktop-python3-$VESTIGE_RPM_VERSION-1.noarch.rpm target/vestige-desktop-python3-$VESTIGE_RPM_VERSION-1.noarch.rpm
 

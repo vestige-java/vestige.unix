@@ -16,5 +16,5 @@ cp src/PKGBUILD target/PKGBUILD
 find target \( -name .svn -o -name .DS_Store \) -exec rm -rf {} \;
 ssh archbuilder rm -rf '~/target'
 scp -r target archbuilder:.
-ssh archbuilder 'cd target && makepkg -s --sign'
+ssh archbuilder 'cd target && makepkg -d --sign'
 scp archbuilder:target/vestige-desktop-python3-${VESTIGE_ARCH_VERSION}-1-any.pkg.tar.xz* target/ 
