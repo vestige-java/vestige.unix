@@ -1,0 +1,19 @@
+#!/bin/bash
+
+VESTIGE_RPM_VERSION=$(cat src/vestige-service-systemd.spec | grep "Version:" | sed 's/Version:[ \t]*//g')
+
+rm -r target
+mkdir -p target/vestige-service-systemd-$VESTIGE_RPM_VERSION
+cp src/Makefile target/vestige-service-systemd-$VESTIGE_RPM_VERSION/
+cp src/vestige-service-systemd.spec target/
+cp -r ../standard_edition_linux_service/src/sbin target/vestige-service-systemd-$VESTIGE_RPM_VERSION/
+cp -r ../standard_edition_linux_service/src/systemd target/vestige-service-systemd-$VESTIGE_RPM_VERSION/
+chmod +x target/vestige-service-systemd-$VESTIGE_RPM_VERSION/sbin/vestiged
+find target \( -name .svn -o -name .DS_Store \) -exec rm -rf {} \;
+pushd target && tar -czf vestige-service-systemd.tar.gz vestige-service-systemd-$VESTIGE_RPM_VERSION && popd
+scp target/vestige-service-systemd.tar.gz rpmbuilder:rpmbuild/SOURCES/vestige-service-systemd.tar.gz
+scp target/vestige-service-systemd.spec rpmbuilder:rpmbuild/SPECS/vestige-service-systemd.spec
+ssh rpmbuilder rpmbuild -bb '~/rpmbuild/SPECS/vestige-service-systemd.spec'
+ssh rpmbuilder 'echo "" | setsid rpm --define "_gpg_name '$GPG_NAME'" --addsign rpmbuild/RPMS/noarch/vestige-service-systemd-'$VESTIGE_RPM_VERSION'-1.noarch.rpm'
+scp rpmbuilder:rpmbuild/RPMS/noarch/vestige-service-systemd-$VESTIGE_RPM_VERSION-1.noarch.rpm target/vestige-service-systemd-$VESTIGE_RPM_VERSION-1.noarch.rpm
+

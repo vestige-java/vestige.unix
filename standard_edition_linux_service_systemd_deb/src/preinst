@@ -1,0 +1,6 @@
+#!/bin/sh
+
+/usr/bin/getent group vestige || /usr/sbin/groupadd -r vestige
+/usr/bin/getent passwd vestige || /usr/sbin/useradd -g vestige -r -m -s /sbin/nologin vestige
+
+exit 0

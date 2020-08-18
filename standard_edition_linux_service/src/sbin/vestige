@@ -1,0 +1,56 @@
+#!/bin/bash
+
+
+vestige_pid=""
+
+quitVestige() {
+  if [ "$vestige_pid" != "" ]; then
+    kill $vestige_pid
+  fi
+}
+
+if [ "$VESTIGE_LISTENER_PORT" = "" ]; then
+  VESTIGE_LISTENER_PORT=21901
+fi
+
+export VESTIGE_LISTENER_PORT
+
+{
+  {
+    cd ~vestige
+    export HOME=$(pwd)
+    export USER=vestige
+    exec /bin/setpriv --reuid=$(id -u vestige) --regid=$(id -g vestige) --inh-caps=-all --clear-groups /usr/share/vestige/vestige
+  } &
+  vestige_pid=$!
+  trap quitVestige SIGINT SIGTERM
+  vestige_dead=no
+  while [ "$vestige_dead" = "no" ]; do
+    size=0
+    for i in {1..4}; do
+      exec 3< <(od -An -t u1 -N 1)
+      read oct <&3
+      if [ "$oct" = "" ]; then
+        vestige_dead=yes
+        break
+      fi
+      size=$((size * 256 + $oct))
+    done
+    if [ "$vestige_dead" != "no" ]; then
+      break
+    fi
+    read -N $size msg
+    case $msg in
+      Starting|Stopping|Stopped) systemd-notify --status "$msg";;
+      Started) systemd-notify --ready --status "$msg";;
+    esac
+  done
+} < <(nc -lp $VESTIGE_LISTENER_PORT < <(tail -f /dev/null))
+
+if [ "$vestige_pid" != "" ]; then
+  while kill $vestige_pid >/dev/null 2>/dev/null; do
+    wait $vestige_pid
+  done
+fi
+
+exit 0

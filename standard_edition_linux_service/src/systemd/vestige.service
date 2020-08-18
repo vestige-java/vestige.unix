@@ -1,0 +1,15 @@
+[Unit]
+Description=Vestige server daemon
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=/usr/sbin/vestige
+ExecStop=/usr/bin/kill $MAINPID
+ExecStop=/usr/bin/tail --pid $MAINPID -f /dev/null
+KillMode=control-group
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

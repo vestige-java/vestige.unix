@@ -1,0 +1,11 @@
+Source: vestige-service-systemd
+Package: vestige-service-systemd
+Version: 1.0.0
+Architecture: all
+Section: java
+Priority: optional
+Maintainer: Gael Lalire <vestige@gaellalire.fr>
+Description: Java Application Manager
+Homepage: http://gaellalire.fr/vestige
+Installed-Size: 15360
+Depends: vestige (>= 8.0.0), netcat-traditional, coreutils, util-linux, bash

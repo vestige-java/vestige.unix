@@ -1,0 +1,22 @@
+#!/bin/bash
+
+VESTIGE_VERSION=$(cat src/control | grep "Version:" | sed 's/Version:[ \t]*//g')
+
+rm -r target
+mkdir -p target/vestige_deb/DEBIAN
+mkdir -p target/vestige_deb/usr/sbin
+mkdir -p target/vestige_deb/lib/systemd/system
+mkdir -p target/vestige_deb/usr/share/doc/vestige-service-systemd
+cp src/control target/vestige_deb/DEBIAN/control
+cp src/preinst target/vestige_deb/DEBIAN/
+chmod +x target/vestige_deb/DEBIAN/preinst
+cp src/copyright target/vestige_deb/usr/share/doc/vestige-service-systemd/copyright
+cp ../standard_edition_linux_service/src/sbin/vestige target/vestige_deb/usr/sbin/
+cp ../standard_edition_linux_service/src/systemd/vestige.service target/vestige_deb/lib/systemd/system/vestige.service
+chmod +x target/vestige_deb/usr/sbin/*
+find target \( -name .svn -o -name .DS_Store \) -exec rm -rf {} \;
+ssh debbuilder rm -rf '~/target'
+scp -r target debbuilder:.
+ssh debbuilder dpkg-deb --no-uniform-compression -b target/vestige_deb/ target/vestige-service-systemd_${VESTIGE_VERSION}_all.deb
+ssh debbuilder debsigs --sign=origin target/vestige-service-systemd_${VESTIGE_VERSION}_all.deb
+scp debbuilder:target/vestige-service-systemd_${VESTIGE_VERSION}_all.deb target/vestige-service-systemd_${VESTIGE_VERSION}_all.deb 
