@@ -328,7 +328,7 @@ class Vestige(dbus.service.Object):
     def write_to_buffer(self, fd, condition):
         if condition == GLib.IO_IN:
             r = fd.read(1024)
-            while r is not None:
+            while r is not None and r:
               self.consoleBuffer += r
 
               decoded, self.consoleBuffer = decodeBytesUtf8Safe(self.consoleBuffer)
